@@ -1,0 +1,104 @@
+﻿@page "/Order/DisplayOrder/{Id:int}"
+
+@inject IFoodData foodData
+@inject IOrderData orderData
+
+@inject NavigationManager navManager
+
+
+@if (order is null || foodList is null)
+{
+    <h4>Loading...</h4>
+}
+else
+{
+    <table class="table table-striped">
+        <tbody>
+            <tr>
+                <td>Order Name</td>
+                <td>@order.OrderName</td>
+            </tr>
+            <tr>
+                <td>Order Date</td>
+                <td>@order.OrderDate</td>
+            </tr>
+            <tr>
+                <td>Meal</td>
+                <td>@mealSelected</td>
+            </tr>
+            <tr>
+                <td>Quantity</td>
+                <td>@order.Quantity</td>
+            </tr>
+
+            <tr>
+                <td>Total</td>
+                <td>@order.Total</td>
+            </tr>
+
+            <tr>
+                <td>
+                    <a class="btn btn-primary" href="@($"/Order/UpdateOrder/{Id}")">
+                        Update Order
+                    </a>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2">
+                    @if (deleteOrder)
+                    {
+                        <button class="btn btn-outline-danger m-1" @onclick="HandleDeleteOrder">
+                            Confirm Delete
+                        </button>
+
+                        <button class="btn btn-secondary m-1" @onclick="@(()=> deleteOrder = false)">
+                            Cancel
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-danger m-1" @onclick="@(() => deleteOrder = true)">
+                            Delete Order
+                        </button>
+                    }                    
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+
+
+@code{
+    [Parameter]
+    public int Id { get; set; }
+
+    private OrderModel order = new();
+    private List<FoodModel> foodList;
+
+    private string mealSelected;
+    private bool deleteOrder = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        foodList = await foodData.GetFood();
+
+        if (Id > 0)
+        {
+            order = await orderData.GetOrderById(Id);
+
+            mealSelected = foodList.Where(x => x.Id == order.FoodId).First().Title;
+        }
+    }
+
+
+    public async void HandleDeleteOrder()
+    {
+        await orderData.CreateOrder(order);
+
+        navManager.NavigateTo("/");
+    }
+
+}

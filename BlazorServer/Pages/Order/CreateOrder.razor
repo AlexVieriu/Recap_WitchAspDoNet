@@ -1,0 +1,73 @@
+﻿@page "/Order/CreateOrder"
+
+@inject IFoodData foodData
+@inject IOrderData orderData
+
+@inject NavigationManager navManager 
+
+@if (foodList is null)
+{
+    <h5>Loading...</h5>
+}
+else
+{
+    <EditForm Model="order" OnValidSubmit="OnCreateOrder">
+        <DataAnnotationsValidator />
+
+        <div class="col-6">
+            <div class="form-group">
+                <label>Meniu List</label>
+                <select class="form-control" @onchange="HandleSelectMeal">                   
+                    @foreach (var food in foodList)
+                    {
+                        <option value="@food.Id">@food.Title</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Quantity</label>
+                <InputNumber @bind-Value="order.Quantity" class="form-control"/>
+                <ValidationMessage For="@(() => order.Quantity)" />
+            </div>
+
+            <div class="form-group">
+                <label>Order Name</label>
+                <InputText  @bind-Value="order.OrderName" class="form-control"/>
+                <ValidationMessage For="@(() => order.OrderName)" />
+            </div>
+
+            <div>
+                <input type="submit" class="btn btn-primary" value="Create Order" @onclick="OnCreateOrder"/>
+            </div>
+        </div>
+
+    </EditForm>
+}
+
+@code{
+    private List<FoodModel> foodList;
+    private OrderModel order = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        foodList = await foodData.GetFood();
+    }
+
+    private void HandleSelectMeal(ChangeEventArgs e)
+    {
+
+        order.FoodId = int.Parse(e.Value.ToString());
+    }
+
+    private async Task OnCreateOrder()
+    {
+        order.Total = order.Quantity * foodList.Where(x => x.Id == order.FoodId).First().Price;
+
+        int id = await orderData.CreateOrder(order);
+
+        navManager.NavigateTo("/Order/CreateOrder");
+    }
+
+}

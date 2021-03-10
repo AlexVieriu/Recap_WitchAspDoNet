@@ -1,0 +1,86 @@
+﻿@page "/Order/UpdateOrder/{Id:int}"
+
+
+@inject IFoodData foodData
+@inject IOrderData orderData
+
+@inject NavigationManager navManager
+
+
+@if (order is null || foodList is null)
+{
+    <h4>Loading...</h4>
+}
+else
+{
+    <EditForm Model="order" OnValidSubmit="HandleUpdateOrder">
+        <DataAnnotationsValidator />
+
+        <div>
+            <div class="form-group">
+                <label>Order Name</label>
+                <InputText class="form-control" @bind-Value="order.OrderName" />
+                <ValidationMessage For="@(() => order.OrderName)" />
+            </div>
+
+            <div class="form-group">
+                <label>Order Date</label>
+                <p class="form-control">@order.OrderDate</p>
+            </div>
+
+
+            <div class="form-group">
+                <label>Meal</label>
+                <p class="form-control">@order.FoodId</p>
+            </div>
+
+            <div class="form-group">
+                <label>Order Name</label>
+                <InputNumber class="form-control" @bind-Value="order.Quantity" />
+                <ValidationMessage For="@(() => order.Quantity)" />
+            </div>
+
+            <div class="form-group">
+                <label>Order Name</label>
+                <InputNumber class="form-control" @bind-Value="order.Total" />
+            </div>
+        </div>
+
+        <div>
+            <button class="btn btn-primary" @onclick="HandleUpdateOrder">Update Order</button>
+        </div>
+    </EditForm>
+}
+
+
+@code{
+    [Parameter]
+    public int Id { get; set; }
+
+    private OrderModel order;
+    private List<FoodModel> foodList;
+
+    private string mealName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await orderData.GetOrderById(Id);
+
+        foodList = await foodData.GetFood();
+
+        mealName = foodList.Where(x => x.Id == order.FoodId).First().Title;
+    }
+
+
+    private async Task HandleUpdateOrder()
+    {
+        var result = await orderData.UpdateModel(order.Id, order.OrderName);
+
+        navManager.NavigateTo($"/Order/UpdateOrder/{result}");
+    }
+
+    public void HandleTotal()
+    {
+        order.Total = order.Quantity * foodList.Where(x => x.Id == order.FoodId).First().Price;
+    }
+}
